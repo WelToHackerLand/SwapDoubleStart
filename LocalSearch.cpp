@@ -165,20 +165,6 @@ bool LocalSearch::move1()
 	updateRouteData(routeU);
 	if (routeU != routeV) updateRouteData(routeV);
 
-		if (routeU->cour != routeV->cour && debugValue > costSuppU + costSuppV) {
-			std::cerr << "??? " << debugValue << " " << costSuppU + costSuppV << '\n';
-			std::cerr << nodeU->cour << " " << nodeV->cour << "\n\n";
-			debugRoute(routeU, 0);
-			debugRoute(routeV, 0);
-			assert(0 == 1);
-		}
-		if (routeU->cour == 1 && routeV->cour == 8) {
-			std::cerr << "LAG " << debugValue << " " << costSuppU + costSuppV << " --> " << nodeU->cour << " " << nodeV->cour << '\n';
-			debugRoute(routeU, 0);
-			debugRoute(routeV, 0);
-			exit(0);
-		}
-
 	return true;
 }
 
@@ -898,6 +884,11 @@ bool LocalSearch::swapDoubleStar() {
 		double oldCost = routeTimeCost(routeU) + routeTimeCost(routeV);
 		double oldScore = oldCost + routeU->penalty + routeV->penalty;
 
+		std::cerr << "OLD VERSION:\n";
+		debugRoute(routeU, 1);
+		debugRoute(routeV, 1);
+		std::cerr << '\n';
+
 	// initialize vector "dp" and "Trace"
 	std::vector<std::vector<std::vector<SwapDoubleStarElement> > > 
 		dp(routeU->nbCustomers+2, 
@@ -1099,7 +1090,8 @@ bool LocalSearch::swapDoubleStar() {
 	// trace back
 	if (dp[routeU->nbCustomers+1][routeV->nbCustomers+1][0].fakeDeltaCost > -MY_EPSILON) return false;
 
-	debugValue = dp[routeU->nbCustomers+1][routeV->nbCustomers+1][0].fakeDeltaCost;
+		debugValue = dp[routeU->nbCustomers+1][routeV->nbCustomers+1][0].fakeDeltaCost;
+		std::cerr << "LAG: " << debugValue << '\n';
 
 	nodeU = routeU->depot->prev;
 	nodeV = routeV->depot->prev;
@@ -1110,7 +1102,10 @@ bool LocalSearch::swapDoubleStar() {
 
 	while (n > 0 || m > 0) {
 		SwapDoubleStarTraceElement prev = Trace[n][m][type];
-
+			
+			std::cerr << "??? " << n << " " << m << " " << type << '\n';
+			std::cerr << "T_T: " << nodeU->cour << " " << nodeV->cour << '\n';
+ 
 		if (prev.type == 0) 
 		{
 			if (type == 0) {
@@ -1222,10 +1217,10 @@ bool LocalSearch::swapDoubleStar() {
 	}
 
 	for (nodeU = routeU->depot->next; !nodeU->isDepot; nodeU = nodeU->next) {
-		nodeU->cour = nodeU->prev->cour;
+		nodeU->route = nodeU->prev->route;
 	}
 	for (nodeV = routeV->depot->next; !nodeV->isDepot; nodeV = nodeV->next) {
-		nodeV->cour = nodeV->prev->cour;
+		nodeV->route = nodeV->prev->route;
 	}
 
 	nbMoves++; // Increment move counter before updating route data
@@ -1233,6 +1228,7 @@ bool LocalSearch::swapDoubleStar() {
 	updateRouteData(routeU);
 	updateRouteData(routeV);
 		
+		std::cerr << "NEW VERSION:\n";
 		debugRoute(routeU, 1);
 		debugRoute(routeV, 1);
 		std::cerr << '\n';
